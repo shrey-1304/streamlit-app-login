@@ -7,7 +7,7 @@ import random
 import smtplib
 from email.message import EmailMessage
 import time
-USERS_FILE = "../data/users.csv"
+USERS_FILE = "users.csv"
 
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
