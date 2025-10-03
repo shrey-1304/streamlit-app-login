@@ -5,7 +5,7 @@ import smtplib
 from email.message import EmailMessage
 import random
 
-SESSION_FILE = "../data/session.txt"
+SESSION_FILE = "session.txt"
 AUTO_LOGIN_DAYS = 2
 
 def load_session():
