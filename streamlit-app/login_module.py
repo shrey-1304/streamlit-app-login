@@ -12,8 +12,8 @@ import random
 from email.message import EmailMessage
 from utils import load_session, save_session, clear_session
 
-USERS_FILE = "../data/users.csv"
-SESSION_FILE = "../data/session.txt"
+USERS_FILE = "users.csv"
+SESSION_FILE = "session.txt"
 AUTO_LOGIN_DAYS = 2
 prop_em= ""
 
