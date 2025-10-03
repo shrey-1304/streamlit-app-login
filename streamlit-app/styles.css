@@ -1,0 +1,38 @@
+
+
+.stTextArea {
+    top : 10px;
+    height:100px;
+    width: 60s0px;
+    margin-right: 0px;
+}
+textarea#text_area_1{
+padding:10px;
+margin-bottom: 100px;
+resize : none;
+
+background-color: #1b1f22;
+}
+
+.txt {
+    display: inline-block;            /* shrink/grow with text */
+    border-radius: 12px;              /* more bubble-like */
+    padding: 10px ;               /* inner spacing */
+    margin-top: 5px ;                    /* vertical spacing */
+    border: 1px solid rgb(85, 98, 105);
+    font-size: 15px;
+    background-color: rgb(14, 33, 48);
+    color: white;
+    max-width: 70%;                   /* wrap instead of stretching full */
+    word-wrap: break-word;            /* break long words */
+    white-space: pre-wrap;            /* preserve newlines */
+}
+/* Target the form container (closest stable selector) */
+div.stForm.st-emotion-cache-zuyloh.emjbblw1{
+    bottom: 10px;
+    position: fixed;
+    width: 60%;
+    height: 22%;
+    z-index: 999;
+    background-color: #1b1f22;
+}
