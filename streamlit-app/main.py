@@ -94,37 +94,7 @@ if st.session_state.username and st.session_state.redirect_to_chat:
     if st.sidebar.button("🗑️ Delete Account") and st.session_state.username != "admin":
         modal = st.container()
         with modal:
-            # Add overlay
-            st.markdown(
-                """
-                <style>
-                .overlay {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background-color: rgba(0,0,0,0.5);
-                    z-index: 1000;
-                }
-                .modal-box {
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background-color: white;
-                    padding: 20px;
-                    border-radius: 8px;
-                    width: 350px;
-                    text-align: center;
-                    z-index: 1001;
-                }
-                </style>
-                <div class="overlay"></div>
-                <div class="modal-box">
-                """,
-                unsafe_allow_html=True
-            )
+
     
             st.markdown("### ⚠️ Delete Account")
             st.markdown("This action is permanent! Once deleted, your account **cannot be recovered**.")
@@ -145,3 +115,4 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                     st.rerun()
     
             st.markdown("</div>", unsafe_allow_html=True)
+
