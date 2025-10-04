@@ -74,23 +74,26 @@ def reset_password():
         col1, col2 = st.columns([9,1])
         with col2:
             if st.button("Next", key="fp_next"):
-                st.spinner("Sending OTP..")
-                time.sleep(2)
-                if fp_user:
+                if not fp_user:
+                    st.warning("Enter something!")
+                else:
                     # Find user by username or email
                     user_row = users_df[(users_df["Username"]==fp_user) | (users_df["Email"]==fp_user)]
-                if user_row.empty:
-                    st.error("No user found with this Username or Email!")
-                elif user_row.empty != True:
+                    if user_row.empty:
+                        st.error("No user found with this Username or Email!")
+                    else:
                         st.session_state.fp_username_value = user_row.iloc[0]["Username"]
                         st.session_state.fp_email_value = user_row.iloc[0]["Email"]
-                        st.session_state.generated_otp = send_otp(st.session_state.fp_email_value, purpose="reset")
-
+                        
+                        # ✅ Proper spinner context
+                        with st.spinner("Sending OTP... ⏳"):
+                            time.sleep(1)  # simulate delay
+                            st.session_state.generated_otp = send_otp(st.session_state.fp_email_value, purpose="reset")
+                        
+                        st.success(f"✅ OTP sent to {st.session_state.fp_email_value}")
                         st.session_state.fp_step = "verify_otp"
-                            
                         st.rerun()
-                else:
-                    st.warning("Enter something!")
+
         with col1:
             if st.button("Back to Login"):
                 st.session_state.fp = False
@@ -98,6 +101,7 @@ def reset_password():
 
     # Step 2: Verify OTP
     elif st.session_state.fp_step == "verify_otp":
+        
         otp_input = st.text_input("Enter OTP", key="fp_otp_input")
         if st.button("Verify OTP", key="fp_verify_btn"):
             if otp_input == st.session_state.generated_otp:
@@ -135,3 +139,4 @@ def reset_password():
                         st.rerun()
             else:
                 st.warning("Fill in both fields!")
+
