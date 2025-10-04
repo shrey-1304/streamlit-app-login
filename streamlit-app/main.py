@@ -91,28 +91,41 @@ if st.session_state.username and st.session_state.redirect_to_chat:
         st.markdown("---")
     
     # Delete Account modal
-    if st.sidebar.button("🗑️ Delete Account") and st.session_state.username != "admin":
-        modal = st.container()
-        with modal:
+    # Sidebar Delete Account button
+    if "show_delete_form" not in st.session_state:
+        st.session_state.show_delete_form = False
 
-    
-            st.markdown("### ⚠️ Delete Account")
-            st.markdown("This action is permanent! Once deleted, your account **cannot be recovered**.")
-    
+    if st.sidebar.button("🗑️ Delete Account") and st.session_state.username != "admin":
+        st.session_state.show_delete_form = True
+
+    # Delete Account form modal
+    if st.session_state.show_delete_form:
+        with st.form("delete_account_form"):
+            st.error("⚠️ This action is permanent! Once deleted, your account **cannot be recovered**.")
+
             allow_delete = st.checkbox("✅ Allow account deletion")
-    
-            if st.button("Confirm Delete") and allow_delete:
-                with st.spinner("Deleting your account... ⏳"):
-                    time.sleep(2)
-                    # Delete account
-                    import pandas as pd
-                    users_df = pd.read_csv("users.csv")
-                    username = st.session_state.username
-                    users_df = users_df[users_df["Username"] != username]
-                    users_df.to_csv("users.csv", index=False)
-                    clear_session()
-                    st.success("Your account has been deleted permanently 😢")
-                    st.rerun()
-    
-            st.markdown("</div>", unsafe_allow_html=True)
+
+            confirm = st.form_submit_button("Confirm Delete")
+
+            if confirm:
+                if allow_delete:
+                    with st.spinner("Deleting your account... ⏳"):
+                        import pandas as pd
+                        time.sleep(2)
+
+                        # Delete account from CSV
+                        users_df = pd.read_csv("users.csv")
+                        username = st.session_state.username
+                        users_df = users_df[users_df["Username"] != username]
+                        users_df.to_csv("users.csv", index=False)
+
+                        # Clear session and username
+                        clear_session()
+                        if "username" in st.session_state:
+                            del st.session_state["username"]
+
+                        st.success("Your account has been deleted permanently 😢")
+                        st.rerun()  # this will redirect them to login
+                else:
+                    st.warning("You must check 'Allow account deletion' before confirming!")
 
