@@ -2,6 +2,8 @@ import streamlit as st
 from login_module import auth_ui, clear_session  # import login/signup module
 import time
 import os
+import pandas as pd
+import random
 
 # ------------------------------
 # Run authentication UI
@@ -34,7 +36,6 @@ if st.session_state.username and st.session_state.redirect_to_chat:
     # Mock AI response function
     def generate_response(user_input):
         time.sleep(0.5)
-        import random
         responses = [
             f"That's an interesting question about '{user_input}'! Let me help you with that.",
             f"I understand you're asking about '{user_input}'. Here's what I know...",
@@ -58,24 +59,29 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                 st.markdown(response)
         st.session_state.messages.append({"role": "assistant", "content": response})
 
+    # ------------------------------
     # Sidebar
+    # ------------------------------
     with st.sidebar:
         st.subheader(f"👤 {st.session_state.username}")
         st.markdown("---")
-        
+
+        # Chat History
         st.subheader("Chat History")
         if st.button("🗑️ Clear Chat"):
-            st.session_state.messages = [{"role": "assistant", "content": "🌊 Chat cleared! How can I help you?"}]
+            st.session_state.messages = [
+                {"role": "assistant", "content": "🌊 Chat cleared! How can I help you?"}
+            ]
             st.rerun()
-        
-        st.markdown("----")
-    
+
+        st.markdown("---")
+
         # Logout button
         if st.button("🚪 Logout"):
             keys_to_clear = [
                 "username", "messages",
                 # forgot password flow
-                "fp","fp_step", "fp_username_value", "fp_email_value", "generated_otp",
+                "fp", "fp_step", "fp_username_value", "fp_email_value", "generated_otp",
                 # signup flow
                 "signup_step", "signup_data", "otp_step",
                 # login flow
@@ -84,33 +90,30 @@ if st.session_state.username and st.session_state.redirect_to_chat:
             for key in keys_to_clear:
                 if key in st.session_state:
                     del st.session_state[key]
-    
+
             clear_session()  # clears session.txt file
             st.rerun()
-        
+
         st.markdown("---")
-    
+
+    # ------------------------------
     # Delete Account modal
-    # Sidebar Delete Account button
+    # ------------------------------
     if "show_delete_form" not in st.session_state:
         st.session_state.show_delete_form = False
 
     if st.sidebar.button("🗑️ Delete Account") and st.session_state.username != "admin":
         st.session_state.show_delete_form = True
 
-    # Delete Account form modal
     if st.session_state.show_delete_form:
         with st.form("delete_account_form"):
             st.error("⚠️ This action is permanent! Once deleted, your account **cannot be recovered**.")
-
             allow_delete = st.checkbox("✅ Allow account deletion")
-
             confirm = st.form_submit_button("Confirm Delete")
 
             if confirm:
                 if allow_delete:
                     with st.spinner("Deleting your account... ⏳"):
-                        import pandas as pd
                         time.sleep(2)
 
                         # Delete account from CSV
@@ -125,8 +128,6 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                             del st.session_state["username"]
 
                         st.success("Your account has been deleted permanently 😢")
-                        st.rerun()  # this will redirect them to login
+                        st.rerun()  # redirect to login
                 else:
                     st.warning("You must check 'Allow account deletion' before confirming!")
-
-
