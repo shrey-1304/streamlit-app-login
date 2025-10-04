@@ -1,5 +1,5 @@
 import streamlit as st
-from login_module import auth_ui, clear_session  # import login/signup module
+from login_module import auth_ui # import login/signup module
 import time
 import os
 import pandas as pd
@@ -131,3 +131,4 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                         st.rerun()  # redirect to login
                 else:
                     st.warning("You must check 'Allow account deletion' before confirming!")
+
