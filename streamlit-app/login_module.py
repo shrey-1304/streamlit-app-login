@@ -10,12 +10,10 @@ from fp import reset_password
 import smtplib
 import random
 from email.message import EmailMessage
-from utils import load_session, save_session, clear_session
+from jwt_utils import create_jwt, decode_jwt  # <- using JWT now
 
 USERS_FILE = "users.csv"
-SESSION_FILE = "session.txt"
-AUTO_LOGIN_DAYS = 2
-prop_em= ""
+prop_em = ""
 
 # ----------------- Initialize session state -----------------
 def send_otp(to_email, purpose="generic"):
@@ -23,14 +21,12 @@ def send_otp(to_email, purpose="generic"):
     sender_email = "smudrarag.work@gmail.com"
     app_password = "kejk seao givp zvvt"  # 16-char App Password
 
-    # Custom email subjects
     subjects = {
         "login": "🔐 Your Login OTP",
         "signup": "✨ Verify Your Account",
         "generic": "Your OTP Code"
     }
 
-    # Custom email bodies
     bodies = {
         "login": f"Hello!\n\nUse this OTP to log in securely:\n\n{otp}\n\nIf you didn’t request this, ignore this email.",
         "signup": f"Welcome to SamudraRAG! 🎉\n\nUse this OTP to verify your account:\n\n{otp}\n\nGlad to have you onboard!",
@@ -44,7 +40,7 @@ def send_otp(to_email, purpose="generic"):
     msg.set_content(bodies.get(purpose, bodies["generic"]))
 
     with st.spinner("Sending OTP... ⏳"):
-        time.sleep(1)  # simulate sending delay
+        time.sleep(1)
         with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
             smtp.login(sender_email, app_password)
             smtp.send_message(msg)
@@ -60,15 +56,6 @@ def load_users():
         return pd.read_csv(USERS_FILE)
     else:
         return pd.DataFrame(columns=["Username", "Email", "Password"])
-
-
-def save_session(username):
-    with open(SESSION_FILE, "w") as f:
-        f.write(f"{username},{datetime.now().isoformat()}")
-
-def clear_session():
-    if os.path.exists(SESSION_FILE):
-        os.remove(SESSION_FILE)
 
 # ----------------- Validation -----------------
 def is_valid_username(username):
@@ -86,9 +73,7 @@ def is_valid_password(password):
     return True, ""
 
 def is_valid_email(email):
-    # Only allow Gmail addresses
     return bool(re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email))
-
 
 # ----------------- Auth UI -----------------
 def auth_ui():
@@ -96,18 +81,12 @@ def auth_ui():
     if "otp_step" not in st.session_state:
         st.session_state.otp_step = "none"
 
-    if "username" not in st.session_state:
-        st.session_state.username = None
-
-
-    # Load session if available
-    if st.session_state.username is None:
-        session_user = load_session()
-        if session_user:
-            st.session_state.username = session_user
-
-    if st.session_state.username:
-        return  # already logged in, don’t show login UI
+    # JWT-based login check
+    token = st.session_state.get("jwt_token")
+    user_data = decode_jwt(token) if token else None
+    if user_data:
+        st.session_state.username = user_data["username"]
+        return  # already logged in
 
     st.title("🌊 SamudraRAG Login")
     st.markdown("<i>*Enter your credentials to continue*</i>", unsafe_allow_html=True)
@@ -128,11 +107,10 @@ def auth_ui():
             new_email = st.text_input("Email", key="signup_email")
             new_password = st.text_input("Password", type="password", key="signup_password")
             confirm_password = st.text_input("Confirm Password", type="password", key="signup_confirm_password")
-            if new_email != "" and  not is_valid_email(new_email):
-                        st.error("Enter a valid Gmail address!")
+            if new_email != "" and not is_valid_email(new_email):
+                st.error("Enter a valid Gmail address!")
             if st.button("Sign Up"):
                 if new_username and new_email and new_password and confirm_password:
-                    # Validate email first
                     if not is_valid_email(new_email):
                         st.error("Enter a valid Gmail address!")
                     elif len(new_username) < 4:
@@ -150,16 +128,12 @@ def auth_ui():
                         if not valid:
                             st.error(f"Invalid password: {message}")
                         else:
-                            # Only now send OTP if not already generated
                             if "generated_otp" not in st.session_state:
                                 try:
                                     st.session_state.generated_otp = send_otp(new_email, purpose="signup")
                                 except Exception:
                                     st.error("Failed to send OTP. Make sure this Gmail exists!")
                                     st.stop()
-
-                               
-                            
                             st.session_state.signup_data = {
                                 "Username": new_username,
                                 "Email": new_email,
@@ -168,27 +142,21 @@ def auth_ui():
                             st.session_state.signup_step = "otp"
                             prop_em = new_email
                             st.rerun()
-
-                        
                 else:
                     st.warning("Fill in all fields!")
 
         elif st.session_state.signup_step == "otp":
-            # Only send OTP once per signup flow
             if "generated_otp" not in st.session_state:
                 try:
                     st.session_state.generated_otp = send_otp(st.session_state.signup_data['Email'], purpose="signup")
                 except Exception:
                     st.error("Failed to send OTP. Make sure this Gmail exists!")
                     st.stop()
-            
+
             st.success(f"✅ OTP sent to {st.session_state.signup_data['Email']}")
             otp_input = st.text_input("Enter OTP:", key=f"otp_{st.session_state.otp_step}")
-
-            
             if st.button("Verify OTP"):
                 if otp_input == st.session_state.generated_otp:
-                    # Hash password & save user
                     hashed_pw = hash_password(st.session_state.signup_data["Password"])
                     users_df = pd.concat([
                         users_df,
@@ -200,15 +168,16 @@ def auth_ui():
                     ], ignore_index=True)
                     users_df.to_csv(USERS_FILE, index=False)
 
-                    # Spinner + auto-login
                     with st.spinner("Account created... logging in ⏳"):
                         time.sleep(2)
                     st.success("Signup & login successful! ✅")
 
+                    # CREATE JWT
+                    token = create_jwt({"username": st.session_state.signup_data["Username"]})
+                    st.session_state["jwt_token"] = token
                     st.session_state.username = st.session_state.signup_data["Username"]
-                    save_session(st.session_state.username)
 
-                    # Clean up OTP & temp data
+                    # Cleanup
                     del st.session_state.signup_data
                     del st.session_state.generated_otp
                     del st.session_state.signup_step
@@ -223,10 +192,8 @@ def auth_ui():
             st.session_state.fp = False
 
         if st.session_state.fp:
-            # Only show forgot password UI
             reset_password()
         else:
-            # Login form only shows when fp is False
             username_input = st.text_input("Username", key="login_username")
             password_input = st.text_input("Password", type="password", key="login_password")
             col1, col2 = st.columns([7,2])
@@ -234,23 +201,17 @@ def auth_ui():
                 if st.button("Forgot password?"):
                     st.session_state.fp = True
                     st.rerun()
-                
             with col1:
                 if st.button("Login"):
                     if username_input and password_input:
                         hashed_input = hash_password(password_input)
-                        
-                        # Check if admin
                         if username_input == "admin" and password_input == "samudra@admin":
                             st.success("👑 Admin login successful!")
-                            
-                            # Show users table directly
                             if os.path.exists(USERS_FILE):
                                 try:
                                     df = pd.read_csv(USERS_FILE)
                                     st.success(f"✅ Found {len(df)} user(s) in users.csv")
                                     st.dataframe(df, use_container_width=True)
-                
                                     st.download_button(
                                         label="📥 Download users.csv",
                                         data=open(USERS_FILE, "rb").read(),
@@ -261,9 +222,7 @@ def auth_ui():
                                     st.error(f"⚠️ Error reading users.csv: {e}")
                             else:
                                 st.warning("⚠️ users.csv not found in this environment.")
-                
                         else:
-                            # Regular user flow
                             user_row = users_df[(users_df["Username"]==username_input) & 
                                                 (users_df["Password"]==hashed_input)]
                             if not user_row.empty:
@@ -272,35 +231,34 @@ def auth_ui():
                                 st.session_state.login_email = user_row.iloc[0]["Email"]
                                 try:
                                     st.session_state.generated_otp = send_otp(st.session_state.login_email, purpose="login")
-                                except Exception as e:
+                                except Exception:
                                     st.error("Failed to send OTP. Check the email!")
                                     st.stop()
-                
                                 st.rerun()
                             else:
                                 st.error("Invalid username or password!")
 
-
-
         # OTP flow
         if "otp_step" in st.session_state:
             if st.session_state.otp_step == "send":
-                # Only send OTP if it hasn't been generated yet
                 if "generated_otp" not in st.session_state:
                     st.session_state.generated_otp = send_otp(st.session_state.login_email, purpose="login")
-                
                 st.session_state.otp_step = "verify"
                 st.rerun()
             elif st.session_state.otp_step == "verify":
-                st.success(f"OTP sent to {st.session_state.login_email}")  
+                st.success(f"OTP sent to {st.session_state.login_email}")
                 otp_input = st.text_input("Enter OTP:", key=f"otp_{st.session_state.otp_step}")
                 if st.button("Verify OTP"):
                     if otp_input == st.session_state.generated_otp:
                         with st.spinner("Logging in... ⏳"):
                             time.sleep(2)
                         st.success("Login successful! ✅")
+
+                        # CREATE JWT
+                        token = create_jwt({"username": st.session_state.login_user})
+                        st.session_state["jwt_token"] = token
                         st.session_state.username = st.session_state.login_user
-                        save_session(st.session_state.username)
+
                         del st.session_state.otp_step
                         del st.session_state.generated_otp
                         st.rerun()
@@ -308,5 +266,12 @@ def auth_ui():
                         st.error("Incorrect OTP!")
         st.stop()
 
-
-
+# ----------------- Logout -----------------
+def logout():
+    keys_to_clear = ["jwt_token", "username", "messages", "login_user", "login_email",
+                     "fp", "fp_step", "fp_username_value", "fp_email_value", "generated_otp",
+                     "signup_step", "signup_data", "otp_step"]
+    for key in keys_to_clear:
+        if key in st.session_state:
+            del st.session_state[key]
+    st.rerun()
