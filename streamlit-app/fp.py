@@ -79,9 +79,9 @@ def reset_password():
                 if fp_user:
                     # Find user by username or email
                     user_row = users_df[(users_df["Username"]==fp_user) | (users_df["Email"]==fp_user)]
-                    if user_row.empty:
-                        st.error("No user found with this Username or Email!")
-                    else:
+                if user_row.empty:
+                    st.error("No user found with this Username or Email!")
+                elif user_row.empty != True:
                         st.session_state.fp_username_value = user_row.iloc[0]["Username"]
                         st.session_state.fp_email_value = user_row.iloc[0]["Email"]
                         st.session_state.generated_otp = send_otp(st.session_state.fp_email_value, purpose="reset")
