@@ -158,7 +158,7 @@ def auth_ui():
                                     st.error("Failed to send OTP. Make sure this Gmail exists!")
                                     st.stop()
 
-                                st.stop()
+                               
                             
                             st.session_state.signup_data = {
                                 "Username": new_username,
@@ -307,5 +307,6 @@ def auth_ui():
                     else:
                         st.error("Incorrect OTP!")
         st.stop()
+
 
 
