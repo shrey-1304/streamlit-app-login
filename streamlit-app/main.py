@@ -75,7 +75,7 @@ if st.session_state.username and st.session_state.redirect_to_chat:
             keys_to_clear = [
                 "username", "messages",
                 # forgot password flow
-                "fp_step", "fp_username_value", "fp_email_value", "generated_otp",
+                "fp","fp_step", "fp_username_value", "fp_email_value", "generated_otp",
                 # signup flow
                 "signup_step", "signup_data", "otp_step",
                 # login flow
@@ -128,4 +128,5 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                         st.rerun()  # this will redirect them to login
                 else:
                     st.warning("You must check 'Allow account deletion' before confirming!")
+
 
