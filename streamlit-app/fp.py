@@ -86,7 +86,7 @@ def reset_password():
                         st.session_state.fp_email_value = user_row.iloc[0]["Email"]
                         
                         # ✅ Proper spinner context
-                        with st.spinner("Sending OTP... ⏳"):
+                        with st.spinner():
                             time.sleep(1)  # simulate delay
                             st.session_state.generated_otp = send_otp(st.session_state.fp_email_value, purpose="reset")
                         
@@ -139,4 +139,5 @@ def reset_password():
                         st.rerun()
             else:
                 st.warning("Fill in both fields!")
+
 
