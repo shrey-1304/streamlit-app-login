@@ -62,13 +62,16 @@ if st.session_state.username and st.session_state.redirect_to_chat:
     with st.sidebar:
         st.subheader(f"👤 {st.session_state.username}")
         st.markdown("---")
+        
         st.subheader("Chat History")
         if st.button("🗑️ Clear Chat"):
             st.session_state.messages = [{"role": "assistant", "content": "🌊 Chat cleared! How can I help you?"}]
             st.rerun()
+        
         st.markdown("----")
+    
+        # Logout button
         if st.button("🚪 Logout"):
-            # Keys that should always be cleared on logout
             keys_to_clear = [
                 "username", "messages",
                 # forgot password flow
@@ -78,12 +81,25 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                 # login flow
                 "login_user", "login_email"
             ]
-            
             for key in keys_to_clear:
                 if key in st.session_state:
                     del st.session_state[key]
-
+    
             clear_session()  # clears session.txt file
             st.rerun()
-
+        
+        st.markdown("---")
+    
+        # Delete Account button
+        if st.session_state.username != "admin":  # protect admin account
+            confirm_delete = st.checkbox("⚠️ Confirm delete my account permanently")
+            if st.button("🗑️ Delete Account") and confirm_delete:
+                import pandas as pd
+                users_df = pd.read_csv("users.csv")
+                username = st.session_state.username
+                users_df = users_df[users_df["Username"] != username]
+                users_df.to_csv("users.csv", index=False)
+                clear_session()
+                st.success("Your account has been deleted permanently 😢")
+                st.experimental_rerun()
 
