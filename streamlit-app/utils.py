@@ -5,7 +5,14 @@ import smtplib
 from email.message import EmailMessage
 import random
 
-SESSION_FILE = "session.txt"
+SESSION_FILE = "../data/session.txt"
+
+def save_session(username):
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(SESSION_FILE), exist_ok=True)
+    
+    with open(SESSION_FILE, "w") as f:
+        f.write(f"{username},{datetime.now().isoformat()}")
 AUTO_LOGIN_DAYS = 2
 
 def load_session():
