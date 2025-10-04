@@ -71,7 +71,7 @@ def reset_password():
     # Step 1: Enter username OR email
     if st.session_state.fp_step == "input":
         fp_user = st.text_input("Enter Username or Registered Email", key="fp_user")
-        col1, col2 = st.columns([9,3])
+        col1, col2 = st.columns([9,2])
         with col2:
             if st.button("Next", key="fp_next"):
                 if not fp_user:
@@ -139,6 +139,7 @@ def reset_password():
                         st.rerun()
             else:
                 st.warning("Fill in both fields!")
+
 
 
 
