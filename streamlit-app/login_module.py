@@ -17,33 +17,6 @@ SESSION_FILE = "session.txt"
 AUTO_LOGIN_DAYS = 2
 prop_em= ""
 
-
-def admin_panel():
-    st.markdown("---")
-    st.markdown("### 🧾 Admin Panel: View Registered Users")
-    admin_pass = st.text_input("Enter admin password to access", type="password")
-    
-    if admin_pass == "samudra@admin":
-        if os.path.exists(USERS_FILE):
-            try:
-                df = pd.read_csv(USERS_FILE)
-                st.success(f"✅ Found {len(df)} user(s) in users.csv")
-                st.dataframe(df, use_container_width=True)
-
-                st.download_button(
-                    label="📥 Download users.csv",
-                    data=open(USERS_FILE, "rb").read(),
-                    file_name="users.csv",
-                    mime="text/csv"
-                )
-            except Exception as e:
-                st.error(f"⚠️ Error reading users.csv: {e}")
-        else:
-            st.warning("⚠️ users.csv not found in this environment.")
-    elif admin_pass:
-        st.error("❌ Incorrect password. Access denied.")
-
-
 # ----------------- Initialize session state -----------------
 def send_otp(to_email, purpose="generic"):
     otp = f"{random.randint(100000, 999999):06d}"  # 6-digit OTP
@@ -254,47 +227,21 @@ def auth_ui():
                 if st.button("Login"):
                     if username_input and password_input:
                         hashed_input = hash_password(password_input)
-                        
-                        # Check if admin
-                        if username_input == "admin" and password_input == "samudra@admin":
-                            st.success("👑 Admin login successful!")
-                            
-                            # Show users table directly
-                            if os.path.exists(USERS_FILE):
-                                try:
-                                    df = pd.read_csv(USERS_FILE)
-                                    st.success(f"✅ Found {len(df)} user(s) in users.csv")
-                                    st.dataframe(df, use_container_width=True)
-                
-                                    st.download_button(
-                                        label="📥 Download users.csv",
-                                        data=open(USERS_FILE, "rb").read(),
-                                        file_name="users.csv",
-                                        mime="text/csv"
-                                    )
-                                except Exception as e:
-                                    st.error(f"⚠️ Error reading users.csv: {e}")
-                            else:
-                                st.warning("⚠️ users.csv not found in this environment.")
-                
-                        else:
-                            # Regular user flow
-                            user_row = users_df[(users_df["Username"]==username_input) & 
-                                                (users_df["Password"]==hashed_input)]
-                            if not user_row.empty:
-                                st.session_state.otp_step = "send"
-                                st.session_state.login_user = username_input
-                                st.session_state.login_email = user_row.iloc[0]["Email"]
-                                try:
-                                    st.session_state.generated_otp = send_otp(st.session_state.login_email, purpose="login")
-                                except Exception as e:
-                                    st.error("Failed to send OTP. Check the email!")
-                                    st.stop()
-                
-                                st.rerun()
-                            else:
-                                st.error("Invalid username or password!")
+                        user_row = users_df[(users_df["Username"]==username_input) & 
+                                            (users_df["Password"]==hashed_input)]
+                        if not user_row.empty:
+                            st.session_state.otp_step = "send"
+                            st.session_state.login_user = username_input
+                            st.session_state.login_email = user_row.iloc[0]["Email"]
+                            try:
+                                st.session_state.generated_otp = send_otp(st.session_state.login_email, purpose="login")
+                            except Exception as e:
+                                st.error("Failed to send OTP. Check the email!")
+                                st.stop()
 
+                            st.rerun()
+                        else:
+                            st.error("Invalid username or password!")
 
 
         # OTP flow
@@ -320,7 +267,3 @@ def auth_ui():
                     else:
                         st.error("Incorrect OTP!")
         st.stop()
-
-
-
-
