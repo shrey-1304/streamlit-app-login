@@ -150,11 +150,14 @@ def auth_ui():
                         if not valid:
                             st.error(f"Invalid password: {message}")
                         else:
-                            # Only now send OTP
-                            try:
-                                st.session_state.generated_otp = send_otp(new_email, purpose="signup")
-                            except Exception:
-                                st.error("Failed to send OTP. Make sure this Gmail exists!")
+                            # Only now send OTP if not already generated
+                            if "generated_otp" not in st.session_state:
+                                try:
+                                    st.session_state.generated_otp = send_otp(new_email, purpose="signup")
+                                except Exception:
+                                    st.error("Failed to send OTP. Make sure this Gmail exists!")
+                                    st.stop()
+
                                 st.stop()
                             
                             st.session_state.signup_data = {
@@ -171,8 +174,17 @@ def auth_ui():
                     st.warning("Fill in all fields!")
 
         elif st.session_state.signup_step == "otp":
+            # Only send OTP once per signup flow
+            if "generated_otp" not in st.session_state:
+                try:
+                    st.session_state.generated_otp = send_otp(st.session_state.signup_data['Email'], purpose="signup")
+                except Exception:
+                    st.error("Failed to send OTP. Make sure this Gmail exists!")
+                    st.stop()
+            
             st.success(f"✅ OTP sent to {st.session_state.signup_data['Email']}")
             otp_input = st.text_input("Enter OTP:", key=f"otp_{st.session_state.otp_step}")
+
             
             if st.button("Verify OTP"):
                 if otp_input == st.session_state.generated_otp:
@@ -273,7 +285,9 @@ def auth_ui():
         # OTP flow
         if "otp_step" in st.session_state:
             if st.session_state.otp_step == "send":
-                st.session_state.generated_otp = send_otp(st.session_state.login_email, purpose="login")  # spinner + custom email
+                # Only send OTP if it hasn't been generated yet
+                if "generated_otp" not in st.session_state:
+                    st.session_state.generated_otp = send_otp(st.session_state.login_email, purpose="login")
                 
                 st.session_state.otp_step = "verify"
                 st.rerun()
@@ -293,4 +307,5 @@ def auth_ui():
                     else:
                         st.error("Incorrect OTP!")
         st.stop()
+
 
