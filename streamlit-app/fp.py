@@ -19,8 +19,8 @@ def load_users():
 
 def send_otp(to_email, purpose="login"):
     otp = f"{random.randint(100000, 999999):06d}"
-    sender_email = "smudrarag.work@gmail.com"
-    app_password = "kejk seao givp zvvt"  
+    sender_email = "samudrarag@gmail.com"
+    app_password = "rajr gqfy meva pyew"  
 
     msg = EmailMessage()
 
@@ -139,6 +139,7 @@ def reset_password():
                         st.rerun()
             else:
                 st.warning("Fill in both fields!")
+
 
 
 
