@@ -18,8 +18,8 @@ prop_em = ""
 # ----------------- Initialize session state -----------------
 def send_otp(to_email, purpose="generic"):
     otp = f"{random.randint(100000, 999999):06d}"  # 6-digit OTP
-    sender_email = "smudrarag.work@gmail.com"
-    app_password = "kejk seao givp zvvt"  # 16-char App Password
+    sender_email = "samudrarag@gmail.com"
+    app_password = "rajr gqfy meva pyew"  # 16-char App Password
 
     subjects = {
         "login": "🔐 Your Login OTP",
@@ -275,3 +275,4 @@ def logout():
         if key in st.session_state:
             del st.session_state[key]
     st.rerun()
+
