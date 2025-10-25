@@ -1,5 +1,5 @@
 import streamlit as st
-from login_module import auth_ui # import login/signup module
+from login_module import auth_ui, logout # import login/signup module and logout
 import time
 import os
 import pandas as pd
@@ -91,7 +91,7 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                 if key in st.session_state:
                     del st.session_state[key]
 
-            clear_session()  # clears session.txt file
+            logout()  # use logout from login_module to clear auth keys and rerun
             st.rerun()
 
         st.markdown("---")
@@ -123,7 +123,7 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                         users_df.to_csv("users.csv", index=False)
 
                         # Clear session and username
-                        clear_session()
+                        logout()
                         if "username" in st.session_state:
                             del st.session_state["username"]
 
@@ -131,4 +131,3 @@ if st.session_state.username and st.session_state.redirect_to_chat:
                         st.rerun()  # redirect to login
                 else:
                     st.warning("You must check 'Allow account deletion' before confirming!")
-
